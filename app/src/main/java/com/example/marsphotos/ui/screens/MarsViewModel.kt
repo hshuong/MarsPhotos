@@ -19,6 +19,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.marsphotos.network.MarsApi
+import kotlinx.coroutines.launch
 
 class MarsViewModel : ViewModel() {
     /** The mutable State that stores the status of the most recent request */
@@ -36,7 +39,23 @@ class MarsViewModel : ViewModel() {
      * Gets Mars photos information from the Mars API Retrofit service and updates the
      * [MarsPhoto] [List] [MutableList].
      */
-    fun getMarsPhotos() {
-        marsUiState = "Set the Mars API status response here!"
+    // A viewModelScope is the built-in coroutine scope defined
+    // for each ViewModel in your app. Any coroutine launched
+    // in this scope is automatically canceled if the ViewModel is cleared.
+
+    // You can use viewModelScope to launch the coroutine and make
+    // the web service request in the background.
+    // Since the viewModelScope belongs to the ViewModel,
+    // the request continues even if the app goes through
+    // a configuration change.
+    private fun getMarsPhotos() {
+        viewModelScope.launch {
+            val listResult = MarsApi.retrofitService.getPhotos()
+            // vi viec lay data tu network co the bi tre nen phai dung
+            // coroutine de khong lam block ham Main
+            // Use viewModelScope to launch the coroutine and make
+            // the web service request in the background.
+            marsUiState = listResult
+        }
     }
 }
