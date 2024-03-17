@@ -22,12 +22,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.marsphotos.network.MarsApi
 import kotlinx.coroutines.launch
+import java.io.IOException
 
+sealed interface MarsUiState {
+    data class Success(val photos: String) : MarsUiState
+    //data class Success(val photos: String) : MarsUiState
+    // In order to store the data, add a constructor parameter to the Success data class
+    object Error : MarsUiState
+    object Loading : MarsUiState
+}
 class MarsViewModel : ViewModel() {
     /** The mutable State that stores the status of the most recent request */
-    var marsUiState: String by mutableStateOf("")
+    // ban dau marsUiState co kieu String cho don gian, hien thi response string ve hoac string loi
+    var marsUiState: MarsUiState by mutableStateOf(MarsUiState.Loading)
         private set
-
+    // da thay doi kieu cua marsUiState tu String sang MarsUiState
     /**
      * Call getMarsPhotos() on init so we can display status immediately.
      */
@@ -50,12 +59,31 @@ class MarsViewModel : ViewModel() {
     // a configuration change.
     private fun getMarsPhotos() {
         viewModelScope.launch {
-            val listResult = MarsApi.retrofitService.getPhotos()
-            // vi viec lay data tu network co the bi tre nen phai dung
-            // coroutine de khong lam block ham Main
-            // Use viewModelScope to launch the coroutine and make
-            // the web service request in the background.
-            marsUiState = listResult
-        }
+//            try {
+//                val listResult = MarsApi.retrofitService.getPhotos()
+//                // vi viec lay data tu network co the bi tre nen phai dung
+//                // coroutine de khong lam block ham Main
+//                // Use viewModelScope to launch the coroutine and make
+//                // the web service request in the background.
+//                // goc la String, doi sang MarsUiState
+//                marsUiState = MarsUiState.Success(listResult)
+//            } catch (e: IOException) {
+//                marsUiState = MarsUiState.Error
+//            }
+            // You can lift the marsUiState assignment out of the try-catch block.
+            marsUiState = try {
+                val listResult = MarsApi.retrofitService.getPhotos()
+                // Tao instance cua sealed interface MarsUiState va su dung no: gan marsUiState cho
+                // no. Cau truc tao instance MarsUiState.Success(thamso) or
+                // MarsUiState.Error or MarsUiStat.Loading (2 cai sau ko co tham so nhu Success)
+                //MarsUiState.Success(listResult)
+                MarsUiState.Success(
+                    "Success: ${listResult.size} Mars photos retrieved"
+                )
+                // The final expression is the value that will be returned after a lambda is executed
+            } catch (e: IOException) {
+                MarsUiState.Error
+            }
+        } // launch
     }
 }
