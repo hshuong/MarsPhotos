@@ -12,6 +12,8 @@ private const val BASE_URL =
 
 private val retrofit = Retrofit.Builder() // Dung bo tao doi tuong Retrofit
     //.addConverterFactory(ScalarsConverterFactory.create()) // convert JSON to String
+
+    // use the kotlinx.serialization converter to convert the JSON object to Kotlin objects
     .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
     .baseUrl(BASE_URL) // ket noi den web service nao
     .build() // Tao doi tuong Retrofit
