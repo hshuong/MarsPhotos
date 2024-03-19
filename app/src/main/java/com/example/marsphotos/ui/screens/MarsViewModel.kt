@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.marsphotos.data.NetworkMarsPhotosRepository
 import com.example.marsphotos.network.MarsApi
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -72,7 +73,11 @@ class MarsViewModel : ViewModel() {
 //            }
             // You can lift the marsUiState assignment out of the try-catch block.
             marsUiState = try {
-                val listResult = MarsApi.retrofitService.getPhotos()
+                val marsPhotoRepository = NetworkMarsPhotosRepository()
+                // o version data layer moi nay, viewModel ko goi network truc tiep, ma dung Repository
+                val listResult = marsPhotoRepository.getMarsPhotos()
+                // o duoi, version old la viewModel goi truc tiep network
+                //val listResult = MarsApi.retrofitService.getPhotos()
                 // Tao instance cua sealed interface MarsUiState va su dung no: gan marsUiState cho
                 // no. Cau truc tao instance MarsUiState.Success(thamso) or
                 // MarsUiState.Error or MarsUiStat.Loading (2 cai sau ko co tham so nhu Success)
