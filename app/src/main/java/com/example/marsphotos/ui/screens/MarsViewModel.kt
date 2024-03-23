@@ -19,9 +19,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import com.example.marsphotos.data.NetworkMarsPhotosRepository
-import com.example.marsphotos.network.MarsApi
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
+import com.example.marsphotos.MarsPhotosApplication
+import com.example.marsphotos.data.MarsPhotosRepository
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -32,7 +36,63 @@ sealed interface MarsUiState {
     object Error : MarsUiState
     object Loading : MarsUiState
 }
-class MarsViewModel : ViewModel() {
+class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : ViewModel() {
+
+    // Quy trinh:
+
+    // 1) O Manifest khai bao app se dung MarsPhotosApplication de chay
+    // Ham onCreate cua class MarsPhotosApplication co khoi tao thuoc tinh container
+
+    // 2) Container co thuoc tinh marsPhotosRepository kieu NetworkMarsPhotosRepository
+    // Co cac tham so de tao ra doi tuong retrofit o day. Nhung doi tuong retrofit
+    // thuc hien chuc nang gi thi dinh nghia o MarsApiService o 5 o duoi
+
+    // 3) thuoc tinh marsPhotosRepository dung retrofit de lay anh photo tu network
+    // dua vao 1 List<MarsPhoto>
+
+    // 4) NetworkMarsPhotosRepository co thuoc tinh marsApiService kieu MarsApiService
+
+    // 5) MarsApiService dung @GET cua retrofit la data ve
+    // Neu them cac chuc nang khac cua retrofit thi them vao day: POST, PUT, DELETE
+
+    // 6) ViewModel can den repository de lay du lieu. Repository duoc
+    // truyen vao ham constructor cua ViewModel duoi dang 1 tham so ten la marsPhotosRepository
+
+    // 7) Tham so cua constructor cua MarsViewModel la marsPhotosRepository duoc tao tu ben ngoai
+    // MarsViewModel theo Dependency Injection. De code linh hoat de test
+
+    // 8) Vi constructor ViewModel ko duoc co tham so ma MarsViewModel can tham so nen
+    // phai dung companion object dat ngay trong class MarsViewModel
+
+    // 9) companion object dung co che Factory de tao ra tham so repository cho constructor
+    // MarsViewModel.
+
+    // 10) companion object can lay Container (container chua thuoc tinh marsPhotosRepository
+    // ben trong, do chuc nang cua container la chua cac dependency cua app)
+    // tu Application duoc dinh nghia rieng la MarsPhotosApplication.
+    // companion object dung container cua MarsPhotosApplication de tao ra
+    // marsPhotosRepository, truyen marsPhotosRepository vao ham dung cua MarsViewModel
+    // de MarsViewModel lay duoc data tu repository
+
+    // ViewModel phu thuoc vao marsPhotosRepository de lay data
+    // Can truyen dependency marsPhotosRepository vao constructor cua MarsViewModel
+    // marsPhotosRepository la dependency cung cap boi DefaultAppContainer
+    // (AppContainer) A container is an object that contains the dependencies that the app requires.
+
+    // Because the Android framework does not allow a ViewModel to be passed values
+    // in the constructor when created, we implement a ViewModelProvider.Factory object,
+    // which lets us get around this limitation.
+
+    // The MarsViewModel.Factory object uses the application container to retrieve
+    // the marsPhotosRepository, and then passes this repository to the ViewModel
+    // when the ViewModel object is created
+    // => Xem o dinh nghia companion object o cuoi class nay
+
+
+    // marsPhotosRepository ket noi network va lay du lieu ve.
+    // MarsApi.retrofitService.getPhotos() trong class NetworkMarsPhotosRepository()
+    // trong interface MarsPhotosRepository
+
     /** The mutable State that stores the status of the most recent request */
     // ban dau marsUiState co kieu String cho don gian, hien thi response string ve hoac string loi
     var marsUiState: MarsUiState by mutableStateOf(MarsUiState.Loading)
@@ -73,11 +133,25 @@ class MarsViewModel : ViewModel() {
 //            }
             // You can lift the marsUiState assignment out of the try-catch block.
             marsUiState = try {
-                val marsPhotoRepository = NetworkMarsPhotosRepository()
+                // val marsPhotosRepository = NetworkMarsPhotosRepository()
                 // o version data layer moi nay, viewModel ko goi network truc tiep, ma dung Repository
-                val listResult = marsPhotoRepository.getMarsPhotos()
+
+                // Instead of the ViewModel directly making the network request for the data,
+                // the repository provides the data. The ViewModel no longer directly
+                // references the MarsApi code.
+
+                // Before
+                // val listResult = MarsApi.retrofitService.getPhotos()
+
+                // Now
+                // marsPhotosRepository la dependency cung cap boi DefaultAppContainer
+                // (AppContainer)
+                val listResult = marsPhotosRepository.getMarsPhotos()
+
+                // Tuy nhien, van can test lay du lieu bang network gia lap nen can dung
+                // cach truyen repository tu ngoai vao, de thay doi linh hoat network that va gia lap
                 // o duoi, version old la viewModel goi truc tiep network
-                //val listResult = MarsApi.retrofitService.getPhotos()
+
                 // Tao instance cua sealed interface MarsUiState va su dung no: gan marsUiState cho
                 // no. Cau truc tao instance MarsUiState.Success(thamso) or
                 // MarsUiState.Error or MarsUiStat.Loading (2 cai sau ko co tham so nhu Success)
@@ -90,5 +164,42 @@ class MarsViewModel : ViewModel() {
                 MarsUiState.Error
             }
         } // launch
+    }
+
+    // A companion object helps us by having a single instance of an object
+    // that is used by everyone without needing to create a new instance
+    // of an expensive object. This is an implementation detail,
+    // and separating it lets us make changes without impacting other parts
+    // of the app's code.
+
+    // Dung mot companion object de thanh phan nao khac trong app cung truy cap
+    // duoc no ma khong phai tao them cac doi tuong moi
+
+    // companion object giong nhu mot bien static cua java, ham main goi no
+    // bang ten class.ten doi tuong companion. Cac ham bat ky trong app goi den
+    // no ma khong can tao ra no
+
+    companion object {
+        // Because the Android framework does not allow a ViewModel to be passed values
+        // in the constructor when created, we implement a ViewModelProvider.Factory object,
+        // which lets us get around this limitation.
+
+        // The MarsViewModel.Factory object uses the application container to retrieve
+        // the marsPhotosRepository, and then passes this repository to the ViewModel
+        // when the ViewModel object is created.
+
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            // The MarsViewModel.Factory object uses the application container
+            // to retrieve the marsPhotosRepository
+            initializer {
+                val application = (this[APPLICATION_KEY] as MarsPhotosApplication)
+                // APPLICATION_KEY dung de TIM doi tuong MarsPhotosApplication cua app
+                // vi MarsPhotosApplication chua thuoc tinh container, container lai
+                // dung de lay ve repository, repository la thanh phan ViewModel phu thuoc
+                // vao. Repository se duoc pass vao constructor ViewModel
+                val marsPhotosRepository = application.container.marsPhotosRepository
+                MarsViewModel(marsPhotosRepository = marsPhotosRepository)
+            }
+        }
     }
 }

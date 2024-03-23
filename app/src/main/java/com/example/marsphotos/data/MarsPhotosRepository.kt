@@ -6,7 +6,8 @@ import com.example.marsphotos.network.MarsPhoto
 interface MarsPhotosRepository {
     suspend fun getMarsPhotos(): List<MarsPhoto>
 }
-
+// Repository la kho chua du lieu, app lay du lieu chi co 1 cach la vao kho du lieu de lay ve
+// kho co nhieu nguon cung cap du lieu dua vao kho nay.
 // Best practices require the app to have a repository for each type of
 // data source your app uses.
 // Type anh Mars lay tu network ve
@@ -17,6 +18,7 @@ interface MarsPhotosRepository {
 // which abstracts away the source of the data
 class NetworkMarsPhotosRepository(
     private val marsApiService: MarsApiService
+    // co the dung cac api khac nhau khong chi la retrofit de lay data tu network
 ): MarsPhotosRepository {
     override suspend fun getMarsPhotos(): List<MarsPhoto> =  marsApiService.getPhotos()
 }
