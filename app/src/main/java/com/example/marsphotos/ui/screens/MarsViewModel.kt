@@ -38,6 +38,13 @@ sealed interface MarsUiState {
 }
 class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : ViewModel() {
 
+    // The ViewModel communicates with the data layer,
+    // and the rest of the app is transparent to this implementation.
+
+    // The MarsViewModel is responsible for making the network call to
+    // get the Mars photos data. In the ViewModel, you use MutableState
+    // to update the app UI when the data changes
+
     // Quy trinh:
 
     // 1) O Manifest khai bao app se dung MarsPhotosApplication de chay
@@ -54,6 +61,12 @@ class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : Vi
 
     // 5) MarsApiService dung @GET cua retrofit la data ve
     // Neu them cac chuc nang khac cua retrofit thi them vao day: POST, PUT, DELETE
+    // retrofit vua convert cac string json sang doi tuong cua Kotlin (MarsPhoto data class)
+    // Trong dinh nghia doi tuong retrofit co tham so:
+    // .addConverterFactory(Json.asConverterFactory("application/json".toMediaType()))
+    // 5.2) Them buoc tai image va hien thi:
+    // The image has to be downloaded, internally stored(cached),
+    // and decoded from its compressed format to an image that Android can use
 
     // 6) ViewModel can den repository de lay du lieu. Repository duoc
     // truyen vao ham constructor cua ViewModel duoi dang 1 tham so ten la marsPhotosRepository
