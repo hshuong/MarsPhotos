@@ -25,8 +25,10 @@ class MarsViewModelTest {
             // Assert that the marsUiState of your ViewModel instance matches
             // the result of a successful call to MarsPhotosRepository.getMarsPhotos()
             assertEquals(
-                MarsUiState.Success("Success: ${FakeDataSource.photosList.size} Mars " +
-                        "photos retrieved"),
+//                MarsUiState.Success("Success: ${FakeDataSource.photosList.size} Mars " +
+//                        "photos retrieved"),
+//                marsViewModel.marsUiState
+                MarsUiState.Success(FakeDataSource.photosList),
                 marsViewModel.marsUiState
             )
         }
