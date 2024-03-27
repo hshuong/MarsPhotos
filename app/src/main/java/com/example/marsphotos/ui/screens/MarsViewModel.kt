@@ -26,11 +26,16 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.marsphotos.MarsPhotosApplication
 import com.example.marsphotos.data.MarsPhotosRepository
+import com.example.marsphotos.network.MarsPhoto
 import kotlinx.coroutines.launch
 import java.io.IOException
 
 sealed interface MarsUiState {
-    data class Success(val photos: String) : MarsUiState
+    // hien nhieu buc anh
+    data class Success(val photos: List<MarsPhoto>) : MarsUiState
+    // thu chi hien 1 buc anh neu tai ve thanh cong
+    //data class Success(val photos: MarsPhoto) : MarsUiState
+    // luc dau chi hien tong so buc anh objects thi la String
     //data class Success(val photos: String) : MarsUiState
     // In order to store the data, add a constructor parameter to the Success data class
     object Error : MarsUiState
@@ -131,7 +136,7 @@ class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : Vi
     // Since the viewModelScope belongs to the ViewModel,
     // the request continues even if the app goes through
     // a configuration change.
-    private fun getMarsPhotos() {
+    fun getMarsPhotos() {
         viewModelScope.launch {
 //            try {
 //                val listResult = MarsApi.retrofitService.getPhotos()
@@ -159,7 +164,14 @@ class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : Vi
                 // Now
                 // marsPhotosRepository la dependency cung cap boi DefaultAppContainer
                 // (AppContainer)
-                val listResult = marsPhotosRepository.getMarsPhotos()
+                // marsUiState duoc khai bao dang MutableState kieu sealed data MarsUiState
+                // var marsUiState: MarsUiState by mutableStateOf(MarsUiState.Loading)
+                //val listResult = marsPhotosRepository.getMarsPhotos()
+                // Chi lay 1 doi tuong buc anh (id, url) dau tien trong List cac anh
+                // val result = marsPhotosRepository.getMarsPhotos()[0]
+
+                // ko can bien result nua vi dung lenh marsPhotosRepository.getMarsPhotos()[0]
+                // truc tiep trong MarsUiState.Success
 
                 // Tuy nhien, van can test lay du lieu bang network gia lap nen can dung
                 // cach truyen repository tu ngoai vao, de thay doi linh hoat network that va gia lap
@@ -169,8 +181,14 @@ class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : Vi
                 // no. Cau truc tao instance MarsUiState.Success(thamso) or
                 // MarsUiState.Error or MarsUiStat.Loading (2 cai sau ko co tham so nhu Success)
                 //MarsUiState.Success(listResult)
+                // trang thai
                 MarsUiState.Success(
-                    "Success: ${listResult.size} Mars photos retrieved"
+                    //"Success: ${listResult.size} Mars photos retrieved"
+                    //"First Mars image URL: ${result.imgSrc}"
+                    // tra ve han 1 doi tuong anh
+                    //marsPhotosRepository.getMarsPhotos()[0]
+                    // tra ve nhieu buc anh
+                    marsPhotosRepository.getMarsPhotos()
                 )
                 // The final expression is the value that will be returned after a lambda is executed
             } catch (e: IOException) {
