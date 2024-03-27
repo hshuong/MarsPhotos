@@ -192,24 +192,23 @@ class MarsViewModel(private val marsPhotosRepository: MarsPhotosRepository) : Vi
     // bang ten class.ten doi tuong companion. Cac ham bat ky trong app goi den
     // no ma khong can tao ra no
 
+    // Because the Android framework does not allow a ViewModel to be passed values
+    // in the constructor when created, we implement a ViewModelProvider.Factory object,
+    // which lets us get around this limitation.
+
+    // The MarsViewModel.Factory object uses the application container to retrieve
+    // the marsPhotosRepository, and then passes this repository to the ViewModel
+    // when the ViewModel object is created.
+    // The MarsViewModel.Factory object uses the application container
+    // to retrieve the marsPhotosRepository
+    // APPLICATION_KEY dung de TIM doi tuong MarsPhotosApplication cua app
+    // vi MarsPhotosApplication chua thuoc tinh container, container lai
+    // dung de lay ve repository, repository la thanh phan ViewModel phu thuoc
+    // vao. Repository se duoc pass vao constructor ViewModel
     companion object {
-        // Because the Android framework does not allow a ViewModel to be passed values
-        // in the constructor when created, we implement a ViewModelProvider.Factory object,
-        // which lets us get around this limitation.
-
-        // The MarsViewModel.Factory object uses the application container to retrieve
-        // the marsPhotosRepository, and then passes this repository to the ViewModel
-        // when the ViewModel object is created.
-
         val Factory: ViewModelProvider.Factory = viewModelFactory {
-            // The MarsViewModel.Factory object uses the application container
-            // to retrieve the marsPhotosRepository
             initializer {
                 val application = (this[APPLICATION_KEY] as MarsPhotosApplication)
-                // APPLICATION_KEY dung de TIM doi tuong MarsPhotosApplication cua app
-                // vi MarsPhotosApplication chua thuoc tinh container, container lai
-                // dung de lay ve repository, repository la thanh phan ViewModel phu thuoc
-                // vao. Repository se duoc pass vao constructor ViewModel
                 val marsPhotosRepository = application.container.marsPhotosRepository
                 MarsViewModel(marsPhotosRepository = marsPhotosRepository)
             }
